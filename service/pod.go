@@ -144,7 +144,7 @@ func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context
 	}
 	//1.设置日志的配置，容器名，获取的内容的配置
 	lineLimit := int64(conf.PodLogTailLine) //先将定义的行数转为int64位
-	option := &corev1.PodLogOptions{        //定义一个corev1.PodLogOptions指针并赋值
+	option := &corev1.PodLogOptions{ //定义一个corev1.PodLogOptions指针并赋值
 		Container: containerName,
 		TailLines: &lineLimit,
 		Follow:    true,
@@ -185,5 +185,6 @@ func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context
 		}
 	}
 	//5.转换数据返回
+	fmt.Println("hello test")
 	return nil
 }
