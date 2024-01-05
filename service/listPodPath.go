@@ -17,7 +17,7 @@ type listpath struct {
 
 func (l *listpath) ListContainerPath(podinfo *PodInfo) (string, error) {
 
-	fmt.Println("pod信息：", podinfo.PodName, podinfo.ContainerName, podinfo.Namespace)
+	fmt.Println("pod信息：", podinfo.PodName, podinfo.ContainerName, podinfo.Namespace, podinfo.Path)
 	req := K8s.Clientset.CoreV1().RESTClient().
 		Post().
 		Resource("pods").
@@ -25,7 +25,7 @@ func (l *listpath) ListContainerPath(podinfo *PodInfo) (string, error) {
 		Namespace(podinfo.Namespace).
 		SubResource("exec").
 		VersionedParams(&corev1.PodExecOptions{
-			Command:   []string{"ls", "/"}, // List the root directory
+			Command:   []string{"ls", "-l", podinfo.Path}, // List the root directory
 			Stdout:    true,
 			Stderr:    true,
 			Container: podinfo.ContainerName,
@@ -48,7 +48,7 @@ func (l *listpath) ListContainerPath(podinfo *PodInfo) (string, error) {
 		return "", errors.New("执行命令失败：" + err.Error())
 	} else {
 		fmt.Println("列出路径为: \n", stdout.String())
-		fmt.Println("报错为:", stderr.String())
+		fmt.Println("stderr:", stderr.String())
 
 		return stdout.String(), nil
 	}

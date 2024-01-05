@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"main/controller"
-	"main/middleware"
+	"main/middle"
 	"main/service"
 	"net/http"
 )
@@ -14,11 +14,13 @@ func main() {
 	err := service.K8s.K8sInit()
 	if err != nil {
 		fmt.Println(err.Error())
+		return
 	}
 
 	//创建路由引擎
 	router := gin.Default()
-	router.Use(middleware.Cors())
+	router.Use(middle.Cors())
+	router.Use(middle.JWTAuth()) //加载jwt中间件，用于token验证
 	//初始化路由
 	controller.Router.RouterInit(router)
 

@@ -5,19 +5,19 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"main/conf"
+	"main/config"
 )
 
 var K8s k8s
 
 type k8s struct {
 	Clientset *kubernetes.Clientset `json:"clientset"`
-	Conf      *rest.Config          `json:"conf"`
+	Conf      *rest.Config          `json:"config"`
 }
 
 func (k *k8s) K8sInit() error {
 	// 配置 Kubernetes 客户端
-	config, err := clientcmd.BuildConfigFromFlags("", conf.Kubeconfig)
+	config, err := clientcmd.BuildConfigFromFlags("", config.Kubeconfig)
 	if err != nil {
 		return fmt.Errorf("获取 Kubernetes 配置失败: %v", err)
 	}

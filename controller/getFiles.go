@@ -48,3 +48,22 @@ func (f *file) GetFilesForWeb(c *gin.Context) {
 		"msg": "上传文件到pod成功！",
 	})
 }
+
+func (f *file) DownLoadFile(c *gin.Context) {
+	podinfo := new(service.PodInfo)
+	if err := c.ShouldBind(podinfo); err != nil {
+		c.JSON(400, gin.H{
+			"err": "数据绑定失败：" + err.Error(),
+		})
+		return
+	}
+	fmt.Println("获取数据为：", podinfo)
+	err := service.CopyTpod.CopyFromPod(podinfo, c)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"err": err.Error(),
+		})
+		return
+	}
+	c.Status(200)
+}

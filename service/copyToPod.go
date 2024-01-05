@@ -6,11 +6,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"io"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
 	"mime/multipart"
+	"os"
+	"strings"
 )
 
 var CopyTpod copyTpod
@@ -23,6 +26,13 @@ type PodInfo struct {
 	Namespace     string `form:"namespace"`
 	ContainerName string `form:"containerName"`
 	Path          string `form:"path"`
+}
+
+type PodInfod struct {
+	PodName       string `json:"podName"`
+	Namespace     string `json:"namespace"`
+	ContainerName string `json:"containerName"`
+	FilePath      string `json:"filePath"`
 }
 
 // CopyToPod 将文件保存到 Kubernetes Pod 容器中
@@ -104,5 +114,130 @@ func (c *copyTpod) CopyToPod(files []*multipart.FileHeader, podinfo *PodInfo) er
 		return fmt.Errorf("执行失败: %v", err)
 	}
 
+	return nil
+}
+
+// 检测目录是否为正确目录
+func (c *copyTpod) checkPath(podinfo *PodInfo) error {
+	req := K8s.Clientset.CoreV1().RESTClient().Post().
+		Namespace(podinfo.Namespace).
+		Resource("pods").
+		Name(podinfo.PodName).
+		SubResource("exec").VersionedParams(
+		&corev1.PodExecOptions{
+			Container: podinfo.ContainerName,
+			// tar文件输出到标准输出
+			Command: []string{"ls", podinfo.Path},
+			Stdout:  true,
+			Stderr:  true,
+		}, scheme.ParameterCodec)
+	exec, err := remotecommand.NewSPDYExecutor(K8s.Conf, "POST", req.URL())
+	if err != nil {
+		fmt.Println("remotecommand.NewSPDYExecutor报错：" + err.Error())
+		return errors.New("remotecommand.NewSPDYExecutor报错：" + err.Error())
+	}
+
+	if err := exec.StreamWithContext(context.Background(), remotecommand.StreamOptions{
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	}); err != nil {
+		fmt.Println("执行远程命令失败：" + err.Error())
+		return err
+	}
+	return nil
+}
+
+// 从pod内拷贝文件到本地
+func (c *copyTpod) CopyFromPod(podinfo *PodInfo, cont *gin.Context) error {
+	//podinfo.FilePath = "/tmp/test/a.txt"
+	fmt.Println("前端传入为：", podinfo)
+	//检测该文件是否存在
+	if err := c.checkPath(podinfo); err != nil {
+		return err
+	}
+	pathArr := strings.Split(podinfo.Path, "/")
+	path := "/"
+	file := ""
+	for i, data := range pathArr {
+		if i < len(pathArr)-1 && data != "" {
+			path += data + "/"
+		} else {
+			file = data
+		}
+	}
+	fmt.Println("路径：", path, " 文件：", file)
+
+	req := K8s.Clientset.CoreV1().RESTClient().Post().
+		Namespace(podinfo.Namespace).
+		Resource("pods").
+		Name(podinfo.PodName).
+		SubResource("exec").VersionedParams(
+		&corev1.PodExecOptions{
+			Container: podinfo.ContainerName,
+			// tar文件输出到标准输出
+			Command: []string{
+				"/bin/bash",
+				"-c",
+				"cd " + path + " && tar cf - " + file},
+			//"cd /tmp/ && tar cf  - 123.zip"},
+
+			Stdout: true,
+			Stderr: true,
+		}, scheme.ParameterCodec)
+	exec, err := remotecommand.NewSPDYExecutor(K8s.Conf, "POST", req.URL())
+	if err != nil {
+		fmt.Println("remotecommand.NewSPDYExecutor报错：" + err.Error())
+		return errors.New("remotecommand.NewSPDYExecutor报错：" + err.Error())
+	}
+
+	//新建一个管道，用于接收远程执行的结果
+	pipReader, pipWriter := io.Pipe()
+	//defer pipWriter.Close()
+	//执行远程命令
+
+	go func() {
+		defer pipWriter.Close()
+		if err := exec.StreamWithContext(context.Background(), remotecommand.StreamOptions{
+			Stdout: pipWriter,
+			Stderr: os.Stderr,
+		}); err != nil {
+			fmt.Println("执行远程命令失败：" + err.Error())
+		}
+	}()
+
+	//fmt.Println("开始读取")
+	//lenum := 0
+	//for {
+	//	buf := make([]byte, 1024)
+	//	_, err := pipReader.Read(buf)
+	//	if err != nil {
+	//		if err == io.EOF {
+	//			break
+	//		}
+	//	}
+	//	lenum += len(buf)
+	//	//fmt.Println("读取到：", string(buf))
+	//}
+	//fmt.Println("读取结束,长度为：", lenum)
+
+	// 设置响应头，告诉浏览器这是一个要下载的文件
+	respFilename := ""
+	if strings.Contains(file, ".") {
+		respFilename = strings.Split(file, ".")[0]
+	} else {
+		respFilename = file
+	}
+	cont.Header("Content-Disposition", "attachment; filename="+respFilename+".tar")
+	cont.Header("Content-Type", "application/octet-stream")
+
+	// 将管道中的数据写入响应体
+	n, err := io.Copy(cont.Writer, pipReader)
+	fmt.Println("写入字节：", n)
+	if err != nil {
+		fmt.Println("写入流失败：" + err.Error())
+		return errors.New("写入流失败：" + err.Error())
+	}
+
+	defer pipReader.Close()
 	return nil
 }

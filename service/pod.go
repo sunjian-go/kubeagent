@@ -9,7 +9,7 @@ import (
 	"io"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"main/conf"
+	"main/config"
 )
 
 // 定义pod类型和Pod对象，用于包外的调用(包是指service目录)，例如Controller
@@ -61,7 +61,7 @@ func (p *pod) fromCells(cells []DataCell) []corev1.Pod {
 // 获取pod列表
 // 获取pod列表，支持过滤、排序、分页
 func (p *pod) GetPods(filterName, namespace string, limit, page int) (podsresp *PodsResp, err error) {
-	//fmt.Println(filterName, namespace, limit, page)
+	fmt.Println("开始获取", filterName, namespace, limit, page)
 	//获取podList类型的pod列表
 	//context.TODO()用于声明一个空的context上下文，用于List方法内设置这个请求的超时（源码），这里的常用用法
 	//metav1.ListOptions{}用于过滤List数据，如使用label，field等
@@ -143,8 +143,8 @@ func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context
 		return errors.New("get pty failed: %v\n" + err.Error())
 	}
 	//1.设置日志的配置，容器名，获取的内容的配置
-	lineLimit := int64(conf.PodLogTailLine) //先将定义的行数转为int64位
-	option := &corev1.PodLogOptions{        //定义一个corev1.PodLogOptions指针并赋值
+	lineLimit := int64(config.PodLogTailLine) //先将定义的行数转为int64位
+	option := &corev1.PodLogOptions{          //定义一个corev1.PodLogOptions指针并赋值
 		Container: containerName,
 		TailLines: &lineLimit,
 		Follow:    true,

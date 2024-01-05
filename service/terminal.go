@@ -23,7 +23,7 @@ type terminal struct {
 // WsHandler是一个WebSocket请求处理函数，用于处理从前端发送来的WebSocket请求
 func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 	//加载k8s配置
-	//conf, err := clientcmd.BuildConfigFromFlags("", conf.Kubeconfig)
+	//config, err := clientcmd.BuildConfigFromFlags("", config.Kubeconfig)
 	//if err != nil {
 	//	logger.Error("加载k8s配置失败：" + err.Error())
 	//	return
