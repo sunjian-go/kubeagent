@@ -186,6 +186,5 @@ func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context
 		}
 	}
 	//5.转换数据返回
-	fmt.Println("hello test")
 	return nil
 }
