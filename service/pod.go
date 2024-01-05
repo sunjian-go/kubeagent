@@ -149,6 +149,7 @@ func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context
 		TailLines: &lineLimit,
 		Follow:    true,
 	}
+
 	//2.获取一个request实例
 	req := K8s.Clientset.CoreV1().Pods(namespace).GetLogs(podName, option)
 	//3.发起stream连接，得到Response.body
@@ -185,5 +186,6 @@ func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context
 		}
 	}
 	//5.转换数据返回
+	fmt.Println("hello test")
 	return nil
 }
