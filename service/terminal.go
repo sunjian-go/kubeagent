@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/goccy/go-json"
 	"github.com/gorilla/websocket"
 	"github.com/wonderivan/logger"
@@ -12,7 +13,6 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	"log"
 	"net/http"
-	"time"
 )
 
 var Terminal terminal
@@ -20,36 +20,36 @@ var Terminal terminal
 type terminal struct {
 }
 
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		// 允许所有来源的WebSocket连接
+		return true
+	},
+}
+
 // WsHandler是一个WebSocket请求处理函数，用于处理从前端发送来的WebSocket请求
-func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
-	//加载k8s配置
-	//config, err := clientcmd.BuildConfigFromFlags("", config.Kubeconfig)
-	//if err != nil {
-	//	logger.Error("加载k8s配置失败：" + err.Error())
-	//	return
-	//}
-	//解析form入参，获取前端传入的namespace,pod,container参数
-	if err := r.ParseForm(); err != nil {
-		logger.Error("解析参数失败：" + err.Error())
-		return
-	}
-	namespace := r.Form.Get("namespace")
-	podName := r.Form.Get("pod_name")
-	containerName := r.Form.Get("container_name")
-	bashType := r.Form.Get("bashType")
-	logger.Info("exec pod: %s, container: %s, namespace: %s\n", podName, containerName, namespace)
+func (t *terminal) WsHandler(namespace, podName, containerName, bashType string, c *gin.Context) error {
+	fmt.Println("有客户端连接")
 
 	//创建一个TerminalSession类型的pty实例,用于向websocket读写信息
-	pty, err := NewTerminalSession(w, r, nil)
+	pty, err := NewTerminalSession(c.Writer, c.Request, nil)
 	if err != nil {
-		logger.Error("get pty failed: %v\n", err)
-		return
+		logger.Error("获取pty实例失败: %v\n", err)
+		return err
 	}
 	//处理关闭
 	defer func() {
-		logger.Info("close session.")
+		logger.Info("关闭ws连接")
 		pty.Close()
 	}()
+
+	// 设置连接关闭的回调函数
+	pty.wsConn.SetCloseHandler(func(code int, text string) error {
+		fmt.Printf("WebSocket 连接关闭，状态码：%d，原因：%s\n", code, text)
+		return nil
+	})
+
+	fmt.Println("ws已连接。。。")
 
 	//组装post请求，请求内容为执行在容器中的命令
 	// 初始化pod所在的corev1资源组
@@ -72,22 +72,15 @@ func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 			TTY:       true,
 		}, scheme.ParameterCodec)
 	logger.Info("exec post request url: ", req)
-	//fmt.Println("req.URL= ", req.URL())
 
 	//升级SPDY协议
 	executor, err := remotecommand.NewSPDYExecutor(K8s.Conf, "POST", req.URL())
 	if err != nil {
 		logger.Error("建立SPDY连接失败，" + err.Error())
-		return
+		return err
 	}
+
 	//与kubelet建立stream连接
-	//err = executor.Stream(remotecommand.StreamOptions{
-	//	Stdin:             pty,
-	//	Stdout:            pty,
-	//	Stderr:            pty,
-	//	TerminalSizeQueue: pty,
-	//	Tty:               true,
-	//})
 	err = executor.StreamWithContext(context.Background(), remotecommand.StreamOptions{
 		Stdin:             pty,
 		Stdout:            pty,
@@ -95,7 +88,6 @@ func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 		TerminalSizeQueue: pty,
 		Tty:               true,
 	})
-
 	if err != nil {
 		logger.Error("执行pod命令失败，" + err.Error())
 		//将报错返回出去
@@ -103,6 +95,7 @@ func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 		//标记退出stream流
 		pty.Done()
 	}
+	return nil
 }
 
 // 消息内容
@@ -119,16 +112,6 @@ type TerminalSession struct {
 	sizeChan chan remotecommand.TerminalSize // 用于传输终端大小的channel
 	doneChan chan struct{}                   // 用于标记WebSocket连接关闭的channel
 }
-
-// 初始化一个websockerf.Upgrader类型的对象，用于http协议升级为ws协议
-var upgrader = func() websocket.Upgrader {
-	upgrader := websocket.Upgrader{}
-	upgrader.HandshakeTimeout = time.Second * 2
-	upgrader.CheckOrigin = func(r *http.Request) bool {
-		return true
-	}
-	return upgrader
-}()
 
 // 创建TerminalSession类型的对象并返回
 func NewTerminalSession(w http.ResponseWriter, r *http.Request, responseHeader http.Header) (*TerminalSession, error) {
@@ -152,21 +135,21 @@ func (t *TerminalSession) Read(p []byte) (int, error) {
 	//从ws中读取消息,也就是读取stdin的消息
 	_, message, err := t.wsConn.ReadMessage()
 	if err != nil {
-		log.Printf("read message err: %v", err)
+		log.Printf("读取stdin的消息失败: %v", err)
 		return 0, err
 	}
 
 	//从ws中读取出来的stdin的消息进行反序列化
 	var msg terminalMessage
 	if err := json.Unmarshal(message, &msg); err != nil {
-		log.Printf("read parse message err: %v", err)
+		log.Printf("反序列化消息失败: %v", err)
 		return 0, err
 	}
 	//fmt.Println("反序列化之后为：", msg)
 	//根据消息内容的选项做不同动作
 	switch msg.Operation {
 	case "stdin":
-		fmt.Println("msg.data= ", msg.Data)
+		//fmt.Println("msg.data= ", msg.Data)
 		return copy(p, msg.Data), nil
 	case "resize":
 		t.sizeChan <- remotecommand.TerminalSize{Width: msg.Cols, Height: msg.Rows}
@@ -192,7 +175,7 @@ func (t *TerminalSession) Write(p []byte) (int, error) {
 		return 0, err
 	}
 	//开始写数据
-	fmt.Println("写入数据：", msg)
+	//fmt.Println("写入数据：", msg)
 	if err := t.wsConn.WriteMessage(websocket.TextMessage, msg); err != nil {
 		log.Printf("写入消息失败：%v", err)
 		return 0, err

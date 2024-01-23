@@ -6,7 +6,6 @@ import (
 	"main/controller"
 	"main/middle"
 	"main/service"
-	"net/http"
 )
 
 func main() {
@@ -20,16 +19,17 @@ func main() {
 	//创建路由引擎
 	router := gin.Default()
 	router.Use(middle.Cors())
-	router.Use(middle.JWTAuth()) //加载jwt中间件，用于token验证
+	//router.Use(middle.JWTAuth()) //加载jwt中间件，用于token验证
 	//初始化路由
 	controller.Router.RouterInit(router)
 
-	//启动websocket
+	//开一个携程去注册集群
 	go func() {
-		http.HandleFunc("/ws", service.Terminal.WsHandler)
-		http.ListenAndServe(":8082", nil)
-		fmt.Println("ws服务已启动。。。")
+		service.Register.Register()
 	}()
+
 	// 运行 Gin 服务
 	router.Run(":8081")
+	//关闭cron
+	defer service.Register.CloseCron()
 }

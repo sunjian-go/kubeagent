@@ -95,10 +95,11 @@ func (d *DataSelector) Filter() *DataSelector {
 // 分页
 // Paginate方法用于数组分页，根据Limit和Page的传参，返回一定范围的数据
 func (d *DataSelector) Paginate() *DataSelector {
-	//fmt.Println("开始分页，limit为：", d.DataSelectQuery.PaginateQuery.Limit)
+
 	limit := d.DataSelectQuery.PaginateQuery.Limit //获取当前元素切片每页的数量
 	page := d.DataSelectQuery.PaginateQuery.Page   //获取当前元素切片的页数
-	fmt.Println("分页信息 ", limit, page)
+	//fmt.Println("分页信息 ", limit, page)
+
 	//验证参数合法，若参数不合法，则返回所有数据
 	if limit <= 0 || page <= 0 {
 		//fmt.Println("分页失败后：", d.GenericDataList)
@@ -113,7 +114,7 @@ func (d *DataSelector) Paginate() *DataSelector {
 	}
 	//起始索引值
 	startindex := limit * (page - 1)
-	fmt.Println("起始为：", startindex)
+	//fmt.Println("起始为：", startindex)
 	endIndex := 0
 	//endIndex不能减1，因为切片默认会减1
 	endIndex = limit * page
@@ -121,7 +122,8 @@ func (d *DataSelector) Paginate() *DataSelector {
 	if len(d.GenericDataList) < endIndex {
 		endIndex = len(d.GenericDataList)
 	}
-	fmt.Println("起始：", startindex, " 结尾：", endIndex)
+
+	//fmt.Println("起始：", startindex, " 结尾：", endIndex)
 	d.GenericDataList = d.GenericDataList[startindex:endIndex] //从下标为0的到下标为最后一个的元素赋值给元素切片
 	fmt.Println("成功分页后个数为：", len(d.GenericDataList))
 	return d

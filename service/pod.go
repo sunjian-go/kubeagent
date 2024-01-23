@@ -61,7 +61,7 @@ func (p *pod) fromCells(cells []DataCell) []corev1.Pod {
 // 获取pod列表
 // 获取pod列表，支持过滤、排序、分页
 func (p *pod) GetPods(filterName, namespace string, limit, page int) (podsresp *PodsResp, err error) {
-	fmt.Println("开始获取", filterName, namespace, limit, page)
+	//fmt.Println("开始获取", filterName, namespace, limit, page)
 	//获取podList类型的pod列表
 	//context.TODO()用于声明一个空的context上下文，用于List方法内设置这个请求的超时（源码），这里的常用用法
 	//metav1.ListOptions{}用于过滤List数据，如使用label，field等
@@ -136,6 +136,7 @@ func (p *pod) GetContainer(podName, namespace string) (containers []string, err 
 
 // 获取pod内容器日志
 func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context) (err error) {
+	fmt.Println("开始获取日志")
 	//new一个TerminalSession类型的pty实例,用来向前端发送数据
 	pty, err := NewTerminalSession(c.Writer, c.Request, nil)
 	if err != nil {

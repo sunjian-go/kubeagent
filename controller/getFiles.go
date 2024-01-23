@@ -18,7 +18,7 @@ func (f *file) GetFilesForWeb(c *gin.Context) {
 	podinfo.Namespace = c.Query("namespace")
 	podinfo.ContainerName = c.Query("containerName")
 	podinfo.Path = c.Query("path")
-	fmt.Println("aaaaaaaaaaaaaaaaa", podinfo)
+	//fmt.Println("aaaaaaaaaaaaaaaaa", podinfo)
 	if podinfo.PodName == "" || podinfo.Namespace == "" || podinfo.Path == "" {
 		fmt.Println("pod信息不完善，请设置完再上传")
 		c.JSON(400, gin.H{
@@ -51,7 +51,7 @@ func (f *file) GetFilesForWeb(c *gin.Context) {
 
 func (f *file) DownLoadFile(c *gin.Context) {
 	podinfo := new(service.PodInfo)
-	if err := c.ShouldBind(podinfo); err != nil {
+	if err := c.ShouldBindJSON(podinfo); err != nil {
 		c.JSON(400, gin.H{
 			"err": "数据绑定失败：" + err.Error(),
 		})

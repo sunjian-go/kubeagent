@@ -216,7 +216,7 @@ func (c *copyTpod) CopyFromPod(podinfo *PodInfo, cont *gin.Context) error {
 	//		}
 	//	}
 	//	lenum += len(buf)
-	//	//fmt.Println("读取到：", string(buf))
+	//	fmt.Println("读取到：", string(buf))
 	//}
 	//fmt.Println("读取结束,长度为：", lenum)
 

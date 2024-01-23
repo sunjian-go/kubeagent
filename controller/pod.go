@@ -29,14 +29,14 @@ type logPod struct {
 // 获取pod列表，支持分页、过滤、排序
 func (p *pod) GetPods(c *gin.Context) {
 	pod := new(podInfo)
-	if err := c.Bind(pod); err != nil {
+	if err := c.ShouldBindJSON(pod); err != nil {
 		c.JSON(400, gin.H{
 			"err":  "绑定pod参数失败" + err.Error(),
 			"data": nil,
 		})
 		return
 	}
-	fmt.Println("客户端传过来的为：", *pod)
+	//fmt.Println("客户端传过来的为：", *pod)
 	podlist, err := service.Pod.GetPods(pod.FilterName, pod.NameSpace, pod.Limit, pod.Page)
 	if err != nil {
 		logger.Info("获取pod列表失败, " + err.Error())
@@ -55,7 +55,7 @@ func (p *pod) GetPods(c *gin.Context) {
 // 获取容器信息
 func (p *pod) GetContainer(c *gin.Context) {
 	pod := new(service.PodDetail)
-	if err := c.Bind(pod); err != nil {
+	if err := c.ShouldBindJSON(pod); err != nil {
 		c.JSON(400, gin.H{
 			"err":  "绑定数据失败" + err.Error(),
 			"data": nil,
@@ -85,6 +85,7 @@ func (p *pod) GetContainerLog(c *gin.Context) {
 		})
 		return
 	}
+	fmt.Println("准备获取日志：", pod)
 	err := service.Pod.GetPodLog(pod.Container, pod.Podname, pod.Namespace, c)
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -96,5 +97,23 @@ func (p *pod) GetContainerLog(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"msg":  "获取日志成功",
 		"data": nil,
+	})
+}
+
+// 终端
+func (p *pod) TerminalFunc(c *gin.Context) {
+	namespace := c.Query("namespace")
+	podName := c.Query("pod_name")
+	containerName := c.Query("container_name")
+	bashType := c.Query("bashType")
+	err := service.Terminal.WsHandler(namespace, podName, containerName, bashType, c)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"err": err.Error(),
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"msg": "建立ws连接成功",
 	})
 }

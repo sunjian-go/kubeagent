@@ -13,7 +13,7 @@ type listpath struct {
 
 func (l *listpath) ListContainerPath(c *gin.Context) {
 	podinfo := new(service.PodInfo)
-	if err := c.Bind(podinfo); err != nil {
+	if err := c.ShouldBindJSON(podinfo); err != nil {
 		c.JSON(400, gin.H{
 			"err": "绑定数据失败" + err.Error(),
 		})

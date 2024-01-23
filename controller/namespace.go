@@ -20,7 +20,7 @@ func (n *namespace) GetNamespaces(c *gin.Context) {
 		})
 		return
 	}
-	//fmt.Println("获取到namespacelist: ", namespaces.Namespaces)
+	//fmt.Println("获取到namespacelist: ", namespaces)
 	c.JSON(200, gin.H{
 		"msg":  "获取namespace列表成功",
 		"data": namespaces,

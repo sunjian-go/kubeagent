@@ -12,12 +12,12 @@ type conf struct {
 }
 
 // 读取整个session配置
-func (c *conf) ReadConfFunc() (map[string]string, error) {
+func (c *conf) ReadConfFunc(opt string) (map[string]string, error) {
 	currentPath, _ := os.Getwd()
-	confPath := currentPath + "/conf/kube_conf.ini"
+	confPath := currentPath + "/conf/conf.ini"
 	_, err := os.Stat(confPath)
 	if err != nil {
-		logger.Error("file is not found %s")
+		logger.Error("配置文件未找到")
 		return nil, err
 	}
 	// 加载配置
@@ -27,8 +27,15 @@ func (c *conf) ReadConfFunc() (map[string]string, error) {
 		return nil, err
 	}
 	// 获取 section
-	kubeconf, _ := config.GetSection("kube")
-	//fmt.Println("配置文件内容：", kubeconf)
-	//fmt.Println("websocker地址：", kubeconf["wshost"])
-	return kubeconf, nil
+	var gconf map[string]string
+	switch opt {
+	case "server":
+		gconf, _ = config.GetSection("server")
+		break
+	case "agent":
+		gconf, _ = config.GetSection("agent")
+		break
+
+	}
+	return gconf, nil
 }
