@@ -28,6 +28,8 @@ CMD ["./kubeagent"]
 # 配置文件
 ```
 [server]
+; 部署方式，有"docker"和"k8s"两种选择
+model = docker
 server_addr = 1.1.1.1   #kubeutils端地址和端口
 port = 8999
 
