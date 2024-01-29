@@ -22,11 +22,11 @@ func (p *packet) StartPacket(c *gin.Context) {
 		return
 	}
 	fmt.Println("需要抓包的数据为：", packinfo)
-	err := service.Pack.StartPacket(packinfo, url)
+	info, err := service.Pack.StartPacket(packinfo, url)
 	if err != nil {
-		if err.Error() == "当前已有抓包程序运行，请稍后重试" {
-			c.JSON(442, gin.H{
-				"err": nil,
+		if err.Error() == "err" {
+			c.JSON(400, gin.H{
+				"err": info,
 			})
 		} else {
 			c.JSON(400, gin.H{
@@ -36,7 +36,7 @@ func (p *packet) StartPacket(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"msg": "启动抓包程序成功",
+		"msg": info,
 	})
 }
 
@@ -49,7 +49,23 @@ func (p *packet) StopPacket(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(200, gin.H{
-		"msg": "关闭抓包程序成功",
-	})
+}
+
+// 获取所有网卡信息
+func (p *packet) GetAllInterface(c *gin.Context) {
+	url := c.Query("url")
+	interfaces, err := service.Pack.GetAllInterface(c, url)
+	if err != nil {
+		if err.Error() == "err" {
+			c.JSON(400, gin.H{
+				"err": interfaces,
+			})
+		} else {
+			c.JSON(400, gin.H{
+				"err": err.Error(),
+			})
+		}
+	}
+	c.JSON(200, interfaces)
+
 }
