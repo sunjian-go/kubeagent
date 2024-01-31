@@ -47,7 +47,7 @@ func (p *packet) StartPacket(pcakinfo *PackInfo, url string) (interface{}, error
 	resp, err = client.Do(req)
 	if err != nil {
 		fmt.Println("发送 HTTP 请求报错：" + err.Error())
-		return nil, errors.New("发送 HTTP 请求报错：" + err.Error())
+		return nil, errors.New("发送 HTTP 请求报错，请检查节点抓包进程是否正常运行")
 	}
 	defer resp.Body.Close()
 
@@ -91,7 +91,7 @@ func (p *packet) StopPacket(cont *gin.Context, url string) error {
 	resp, err = client.Do(req)
 	if err != nil {
 		fmt.Println("发送 HTTP 请求报错：" + err.Error())
-		return errors.New("发送 HTTP 请求报错：" + err.Error())
+		return errors.New("发送 HTTP 请求报错，请检查节点抓包进程是否正常运行")
 	}
 	defer resp.Body.Close()
 
@@ -122,8 +122,8 @@ func (p *packet) StopPacket(cont *gin.Context, url string) error {
 
 // 获取网卡列表
 func (p *packet) GetAllInterface(cont *gin.Context, url string) (interface{}, error) {
-	urls := "http://" + url + "/api/stopPacket"
-	req, err := http.NewRequest("POST", urls, nil) //后端需要用ShouldBindJSON来接收参数
+	urls := "http://" + url + "/api/interfaces"
+	req, err := http.NewRequest("GET", urls, nil) //后端需要用ShouldBindJSON来接收参数
 	if err != nil {
 		fmt.Println("创建 HTTP 请求报错：" + err.Error())
 		return nil, errors.New("创建 HTTP 请求报错：" + err.Error())
@@ -134,10 +134,11 @@ func (p *packet) GetAllInterface(cont *gin.Context, url string) (interface{}, er
 	var resp *http.Response
 	// 创建 HTTP 客户端
 	client := &http.Client{}
+
 	resp, err = client.Do(req)
 	if err != nil {
 		fmt.Println("发送 HTTP 请求报错：" + err.Error())
-		return nil, errors.New("发送 HTTP 请求报错：" + err.Error())
+		return nil, errors.New("发送 HTTP 请求报错，请检查节点抓包进程是否正常运行")
 	}
 	defer resp.Body.Close()
 

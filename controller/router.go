@@ -17,12 +17,14 @@ func (r *router) RouterInit(router *gin.Engine) {
 		GET("/api/corev1/getcontainers", Pod.GetContainer).
 		GET("/api/corev1/getnamespaces", Namespace.GetNamespaces).
 		GET("/api/corev1/getnodes", Node.GetNodes).
+		GET("/api/corev1/getnodedetail", Node.GetNodeDetail).
 		GET("/api/corev1/getlog", Pod.GetContainerLog).
 		GET("/api/terminal", Pod.TerminalFunc).
 		GET("/api/listPath", Listpath.ListContainerPath).
 		POST("/api/download", File.DownLoadFile).
 		POST("/api/startPacket", Pack.StartPacket).
 		POST("/api/stopPacket", Pack.StopPacket).
+		GET("/api/interfaces", Pack.GetAllInterface).
 		POST("/api/icmp", Icmp.PingFunc).
 		POST("/api/port", Port.PortTel)
 

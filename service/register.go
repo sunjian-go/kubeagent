@@ -25,7 +25,7 @@ func (r *register) Register() {
 		K8sVersion  string `json:"k8s_version"`
 	})
 	//获取k8s集群版本
-	nodes, err := Node.GetNodes()
+	nodes, err := Node.GetNodes("", "9999999", "1") //这里写死表示获取所有的node
 	if err != nil {
 		fmt.Println(err.Error())
 		return

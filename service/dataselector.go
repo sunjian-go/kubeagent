@@ -256,3 +256,13 @@ func (p nsCell) GetCreation() time.Time {
 func (p nsCell) GetName() string {
 	return p.Name
 }
+
+// node
+type nodeCell corev1.Node
+
+func (n nodeCell) GetCreation() time.Time {
+	return n.CreationTimestamp.Time
+}
+func (n nodeCell) GetName() string {
+	return n.Name
+}

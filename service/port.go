@@ -44,7 +44,7 @@ func (p *portt) TCPTelnet(portdata *PortData, url string) (interface{}, error) {
 	resp, err = client.Do(req)
 	if err != nil {
 		logger.Error("发送 HTTP 请求报错：" + err.Error())
-		return "", errors.New("发送 HTTP 请求报错：" + err.Error())
+		return "", errors.New("发送 HTTP 请求报错，请检查节点端口检测进程是否正常运行")
 	}
 	defer resp.Body.Close()
 
