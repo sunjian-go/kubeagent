@@ -65,12 +65,14 @@ func (r *register) Register() {
 	req, err := http.NewRequest(http.MethodPost, "http://"+sconf["server_addr"]+":"+sconf["port"]+"/api/register", jsonReader)
 	if err != nil {
 		fmt.Println("创建 HTTP 请求报错：", err.Error())
+		return
 	}
 
 	// 发送 HTTP 请求
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("发送 HTTP 请求报错：", err.Error())
+		return
 	}
 	fmt.Println("状态信息：", resp)
 
@@ -114,6 +116,7 @@ func sendKeepalive(ipp string, name string) {
 	req, err := http.NewRequest(http.MethodPost, "http://"+ipp+"/api/keepalive?clusterName="+name, nil)
 	if err != nil {
 		fmt.Println("创建 HTTP 请求报错：", err.Error())
+		return
 	}
 	// 发送 HTTP 请求
 	var resp *http.Response
@@ -121,10 +124,11 @@ func sendKeepalive(ipp string, name string) {
 	resp, err = client.Do(req)
 	if err != nil {
 		fmt.Println("发送 HTTP 请求报错：", err.Error())
+		return
 	}
 
-	fmt.Println("状态信息：", resp.Status)
-	if resp.Status == "200 OK" {
+	//fmt.Println("状态信息：", resp.Status)
+	if resp.StatusCode == 200 {
 		fmt.Println("保持心跳。。。")
 	} else {
 		fmt.Println("心跳断开。。。")
