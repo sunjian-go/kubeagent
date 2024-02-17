@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"main/config"
+	"time"
 )
 
 // 定义pod类型和Pod对象，用于包外的调用(包是指service目录)，例如Controller
@@ -143,6 +144,9 @@ func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context
 		logger.Error("get pty failed: %v\n", err)
 		return errors.New("get pty failed: %v\n" + err.Error())
 	}
+	//设置超时时间
+	pty.wsConn.SetWriteDeadline(time.Now().Add(10 * time.Minute))
+
 	//1.设置日志的配置，容器名，获取的内容的配置
 	lineLimit := int64(config.PodLogTailLine) //先将定义的行数转为int64位
 	option := &corev1.PodLogOptions{          //定义一个corev1.PodLogOptions指针并赋值

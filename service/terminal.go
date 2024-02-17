@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	"log"
 	"net/http"
+	"time"
 )
 
 var Terminal terminal
@@ -132,13 +133,16 @@ func NewTerminalSession(w http.ResponseWriter, r *http.Request, responseHeader h
 // 重写Read方法，给内部调用
 // Read用于从WebSocket连接中读取消息，接收web端输入的指令内容,返回值int是读成功了多少数据
 func (t *TerminalSession) Read(p []byte) (int, error) {
+	//设置ws超时时间
+	t.wsConn.SetReadDeadline(time.Now().Add(10 * time.Minute))
+
 	//从ws中读取消息,也就是读取stdin的消息
 	_, message, err := t.wsConn.ReadMessage()
 	if err != nil {
 		log.Printf("读取stdin的消息失败: %v", err)
 		return 0, err
 	}
-
+	fmt.Println("读取到来自前端的消息：", message)
 	//从ws中读取出来的stdin的消息进行反序列化
 	var msg terminalMessage
 	if err := json.Unmarshal(message, &msg); err != nil {
