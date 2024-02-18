@@ -6,13 +6,21 @@ import (
 	"main/controller"
 	"main/middle"
 	"main/service"
+	"main/utils"
 )
 
 func main() {
-	//初始化K8s
-	err := service.K8s.K8sInit()
+	//初始话日志打印
+	err := utils.Log.LogInit()
 	if err != nil {
 		fmt.Println(err.Error())
+		return
+	}
+
+	//初始化K8s
+	err = service.K8s.K8sInit()
+	if err != nil {
+		utils.Logg.Error(err.Error())
 		return
 	}
 

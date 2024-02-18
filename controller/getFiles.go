@@ -20,7 +20,7 @@ func (f *file) GetFilesForWeb(c *gin.Context) {
 	podinfo.Path = c.Query("path")
 	//fmt.Println("aaaaaaaaaaaaaaaaa", podinfo)
 	if podinfo.PodName == "" || podinfo.Namespace == "" || podinfo.Path == "" {
-		fmt.Println("pod信息不完善，请设置完再上传")
+		//utils.Logg.Info("pod信息不完善，请设置完再上传")
 		c.JSON(400, gin.H{
 			"err": "pod信息不完善，请设置完再上传",
 		})

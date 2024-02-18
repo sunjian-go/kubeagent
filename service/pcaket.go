@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	"io"
 	"main/utils"
 	"net/http"
@@ -28,14 +27,14 @@ func (p *packet) StartPacket(pcakinfo *PackInfo, url string) (interface{}, error
 	// 将结构体编码为 JSON
 	jsonReader, err := utils.Stj.StructToJson(pcakinfo)
 	if err != nil {
-		logger.Error(err.Error())
+		utils.Logg.Error(err.Error())
 		return nil, err
 	}
 	//创建http请求
 	urls := "http://" + url + "/api/startPacket"
 	req, err := http.NewRequest("POST", urls, jsonReader) //后端需要用ShouldBindJSON来接收参数
 	if err != nil {
-		fmt.Println("创建 HTTP 请求报错：" + err.Error())
+		utils.Logg.Error("创建 HTTP 请求报错：" + err.Error())
 		return nil, errors.New("创建 HTTP 请求报错：" + err.Error())
 	}
 	fmt.Println("发送：", req)
@@ -46,17 +45,16 @@ func (p *packet) StartPacket(pcakinfo *PackInfo, url string) (interface{}, error
 	client := &http.Client{}
 	resp, err = client.Do(req)
 	if err != nil {
-		fmt.Println("发送 HTTP 请求报错：" + err.Error())
+		utils.Logg.Error("发送 HTTP 请求报错：" + err.Error())
 		return nil, errors.New("发送 HTTP 请求报错，请检查节点抓包进程是否正常运行")
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("状态信息：", resp.Status)
-
+	//fmt.Println("状态信息：", resp.Status)
 	// 读取响应的 body 内容
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Error("读取响应 body 时出错:" + err.Error())
+		utils.Logg.Error("读取响应 body 时出错:" + err.Error())
 		return nil, errors.New("读取响应 body 时出错:" + err.Error())
 	}
 	// 解析 body 内容为 JSON 格式
@@ -64,7 +62,7 @@ func (p *packet) StartPacket(pcakinfo *PackInfo, url string) (interface{}, error
 	//解码到data中
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Error("解析 JSON 数据时出错:" + err.Error())
+		utils.Logg.Error("解析 JSON 数据时出错:" + err.Error())
 		return nil, errors.New("解析 JSON 数据时出错:" + err.Error())
 	}
 	if resp.StatusCode == 200 {
@@ -79,7 +77,7 @@ func (p *packet) StopPacket(cont *gin.Context, url string) error {
 	urls := "http://" + url + "/api/stopPacket"
 	req, err := http.NewRequest("POST", urls, nil) //后端需要用ShouldBindJSON来接收参数
 	if err != nil {
-		fmt.Println("创建 HTTP 请求报错：" + err.Error())
+		utils.Logg.Error("创建 HTTP 请求报错：" + err.Error())
 		return errors.New("创建 HTTP 请求报错：" + err.Error())
 	}
 	fmt.Println("发送：", req)
@@ -90,7 +88,7 @@ func (p *packet) StopPacket(cont *gin.Context, url string) error {
 	client := &http.Client{}
 	resp, err = client.Do(req)
 	if err != nil {
-		fmt.Println("发送 HTTP 请求报错：" + err.Error())
+		utils.Logg.Error("发送 HTTP 请求报错：" + err.Error())
 		return errors.New("发送 HTTP 请求报错，请检查节点抓包进程是否正常运行")
 	}
 	defer resp.Body.Close()
@@ -111,7 +109,7 @@ func (p *packet) StopPacket(cont *gin.Context, url string) error {
 		n, err := io.Copy(cont.Writer, resp.Body)
 		fmt.Println("写入字节：", n)
 		if err != nil {
-			fmt.Println("写入流失败：" + err.Error())
+			utils.Logg.Error("写入流失败：" + err.Error())
 			return errors.New("写入流失败：" + err.Error())
 		}
 	} else {
@@ -125,7 +123,7 @@ func (p *packet) GetAllInterface(cont *gin.Context, url string) (interface{}, er
 	urls := "http://" + url + "/api/interfaces"
 	req, err := http.NewRequest("GET", urls, nil) //后端需要用ShouldBindJSON来接收参数
 	if err != nil {
-		fmt.Println("创建 HTTP 请求报错：" + err.Error())
+		utils.Logg.Error("创建 HTTP 请求报错：" + err.Error())
 		return nil, errors.New("创建 HTTP 请求报错：" + err.Error())
 	}
 	fmt.Println("发送：", req)
@@ -137,7 +135,7 @@ func (p *packet) GetAllInterface(cont *gin.Context, url string) (interface{}, er
 
 	resp, err = client.Do(req)
 	if err != nil {
-		fmt.Println("发送 HTTP 请求报错：" + err.Error())
+		utils.Logg.Error("发送 HTTP 请求报错：" + err.Error())
 		return nil, errors.New("发送 HTTP 请求报错，请检查节点抓包进程是否正常运行")
 	}
 	defer resp.Body.Close()
@@ -145,7 +143,7 @@ func (p *packet) GetAllInterface(cont *gin.Context, url string) (interface{}, er
 	// 读取响应的 body 内容
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Error("读取响应 body 时出错:" + err.Error())
+		utils.Logg.Error("读取响应 body 时出错:" + err.Error())
 		return "", errors.New("读取响应 body 时出错:" + err.Error())
 	}
 	// 解析 body 内容为 JSON 格式
@@ -153,7 +151,7 @@ func (p *packet) GetAllInterface(cont *gin.Context, url string) (interface{}, er
 	//解码到data中
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Error("解析 JSON 数据时出错:" + err.Error())
+		utils.Logg.Error("解析 JSON 数据时出错:" + err.Error())
 		return "", errors.New("解析 JSON 数据时出错:" + err.Error())
 	}
 

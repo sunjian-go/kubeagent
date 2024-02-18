@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/wonderivan/logger"
 	"io"
 	"main/utils"
 	"net/http"
@@ -24,7 +23,7 @@ func (p *portt) TCPTelnet(portdata *PortData, url string) (interface{}, error) {
 	//将结构体转为json格式
 	jsonReader, err := utils.Stj.StructToJson(portdata)
 	if err != nil {
-		logger.Error(err.Error())
+		utils.Logg.Error(err.Error())
 		return "", err
 	}
 
@@ -32,7 +31,7 @@ func (p *portt) TCPTelnet(portdata *PortData, url string) (interface{}, error) {
 	urls := "http://" + url + "/api/port"
 	req, err := http.NewRequest("POST", urls, jsonReader) //后端需要用ShouldBindJSON来接收参数
 	if err != nil {
-		logger.Error("创建 HTTP 请求报错：" + err.Error())
+		utils.Logg.Error("创建 HTTP 请求报错：" + err.Error())
 		return "", errors.New("创建 HTTP 请求报错：" + err.Error())
 	}
 	fmt.Println("发送：", req)
@@ -43,7 +42,8 @@ func (p *portt) TCPTelnet(portdata *PortData, url string) (interface{}, error) {
 	client := &http.Client{}
 	resp, err = client.Do(req)
 	if err != nil {
-		logger.Error("发送 HTTP 请求报错：" + err.Error())
+		utils.Logg.Error("发送 HTTP 请求报错：" + err.Error())
+		fmt.Println("发送 HTTP 请求报错：" + err.Error())
 		return "", errors.New("发送 HTTP 请求报错，请检查节点端口检测进程是否正常运行")
 	}
 	defer resp.Body.Close()
@@ -53,7 +53,7 @@ func (p *portt) TCPTelnet(portdata *PortData, url string) (interface{}, error) {
 	// 读取响应的 body 内容
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Error("读取响应 body 时出错:" + err.Error())
+		utils.Logg.Error("读取响应 body 时出错:" + err.Error())
 		return "", errors.New("读取响应 body 时出错:" + err.Error())
 	}
 	// 解析 body 内容为 JSON 格式
@@ -61,7 +61,7 @@ func (p *portt) TCPTelnet(portdata *PortData, url string) (interface{}, error) {
 	//解码到data中
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Error("解析 JSON 数据时出错:" + err.Error())
+		utils.Logg.Error("解析 JSON 数据时出错:" + err.Error())
 		return "", errors.New("解析 JSON 数据时出错:" + err.Error())
 	}
 	//fmt.Println("aaaaa", data)

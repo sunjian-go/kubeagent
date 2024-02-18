@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
+	"main/utils"
 	"mime/multipart"
 	"os"
 	"strings"
@@ -39,7 +40,7 @@ type PodInfod struct {
 func (c *copyTpod) CopyToPod(files []*multipart.FileHeader, podinfo *PodInfo) error {
 	// 确保至少有一个文件
 	if len(files) == 0 {
-		fmt.Println("没有上传文件")
+		utils.Logg.Info("没有上传文件")
 		return errors.New("没有上传文件")
 	}
 
@@ -133,7 +134,7 @@ func (c *copyTpod) checkPath(podinfo *PodInfo) error {
 		}, scheme.ParameterCodec)
 	exec, err := remotecommand.NewSPDYExecutor(K8s.Conf, "POST", req.URL())
 	if err != nil {
-		fmt.Println("remotecommand.NewSPDYExecutor报错：" + err.Error())
+		utils.Logg.Error("remotecommand.NewSPDYExecutor报错：" + err.Error())
 		return errors.New("remotecommand.NewSPDYExecutor报错：" + err.Error())
 	}
 
@@ -141,7 +142,7 @@ func (c *copyTpod) checkPath(podinfo *PodInfo) error {
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	}); err != nil {
-		fmt.Println("执行远程命令失败：" + err.Error())
+		utils.Logg.Error("执行远程命令失败：" + err.Error())
 		return err
 	}
 	return nil
@@ -165,7 +166,7 @@ func (c *copyTpod) CopyFromPod(podinfo *PodInfo, cont *gin.Context) error {
 			file = data
 		}
 	}
-	fmt.Println("路径：", path, " 文件：", file)
+	utils.Logg.Info("路径：" + path + " 文件：" + file)
 
 	req := K8s.Clientset.CoreV1().RESTClient().Post().
 		Namespace(podinfo.Namespace).
@@ -186,7 +187,7 @@ func (c *copyTpod) CopyFromPod(podinfo *PodInfo, cont *gin.Context) error {
 		}, scheme.ParameterCodec)
 	exec, err := remotecommand.NewSPDYExecutor(K8s.Conf, "POST", req.URL())
 	if err != nil {
-		fmt.Println("remotecommand.NewSPDYExecutor报错：" + err.Error())
+		utils.Logg.Error("remotecommand.NewSPDYExecutor报错：" + err.Error())
 		return errors.New("remotecommand.NewSPDYExecutor报错：" + err.Error())
 	}
 
@@ -201,24 +202,9 @@ func (c *copyTpod) CopyFromPod(podinfo *PodInfo, cont *gin.Context) error {
 			Stdout: pipWriter,
 			Stderr: os.Stderr,
 		}); err != nil {
-			fmt.Println("执行远程命令失败：" + err.Error())
+			utils.Logg.Error("执行远程命令失败：" + err.Error())
 		}
 	}()
-
-	//fmt.Println("开始读取")
-	//lenum := 0
-	//for {
-	//	buf := make([]byte, 1024)
-	//	_, err := pipReader.Read(buf)
-	//	if err != nil {
-	//		if err == io.EOF {
-	//			break
-	//		}
-	//	}
-	//	lenum += len(buf)
-	//	fmt.Println("读取到：", string(buf))
-	//}
-	//fmt.Println("读取结束,长度为：", lenum)
 
 	// 设置响应头，告诉浏览器这是一个要下载的文件
 	respFilename := ""
@@ -234,7 +220,7 @@ func (c *copyTpod) CopyFromPod(podinfo *PodInfo, cont *gin.Context) error {
 	n, err := io.Copy(cont.Writer, pipReader)
 	fmt.Println("写入字节：", n)
 	if err != nil {
-		fmt.Println("写入流失败：" + err.Error())
+		utils.Logg.Error("写入流失败：" + err.Error())
 		return errors.New("写入流失败：" + err.Error())
 	}
 

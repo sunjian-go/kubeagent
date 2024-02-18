@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/robfig/cron"
+	"main/utils"
 	"net/http"
 	"strings"
 )
@@ -15,7 +16,7 @@ type register struct {
 }
 
 func (r *register) Register() {
-	fmt.Println("开始注册集群。。。")
+	utils.Logg.Info("开始注册集群。。。")
 	client := &http.Client{}
 
 	cluster := new(struct {
@@ -27,7 +28,7 @@ func (r *register) Register() {
 	//获取k8s集群版本
 	nodes, err := Node.GetNodes("", "9999999", "1") //这里写死表示获取所有的node
 	if err != nil {
-		fmt.Println(err.Error())
+		utils.Logg.Error(err.Error())
 		return
 	}
 	for _, node := range nodes.Items {
@@ -39,7 +40,7 @@ func (r *register) Register() {
 	//先从配置文件获取所需参数
 	gconf, err := Conf.ReadConfFunc("agent")
 	if err != nil {
-		fmt.Println(err.Error())
+		utils.Logg.Error(err.Error())
 		return
 	}
 	cluster.ClusterName = gconf["cluster_name"]
@@ -48,7 +49,7 @@ func (r *register) Register() {
 	// 将结构体编码为 JSON
 	jsonData, err := json.Marshal(cluster)
 	if err != nil {
-		fmt.Println("编码结构体为 JSON 时出错：", err)
+		utils.Logg.Error("编码结构体为 JSON 时出错：" + err.Error())
 		return
 	}
 
@@ -59,29 +60,29 @@ func (r *register) Register() {
 	//获取server端参数
 	sconf, err := Conf.ReadConfFunc("server")
 	if err != nil {
-		fmt.Println(err.Error())
+		utils.Logg.Error(err.Error())
 		return
 	}
 	req, err := http.NewRequest(http.MethodPost, "http://"+sconf["server_addr"]+":"+sconf["port"]+"/api/register", jsonReader)
 	if err != nil {
-		fmt.Println("创建 HTTP 请求报错：", err.Error())
+		utils.Logg.Error("创建 HTTP 请求报错：" + err.Error())
 		return
 	}
 
 	// 发送 HTTP 请求
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("发送 HTTP 请求报错：", err.Error())
+		utils.Logg.Error("发送 HTTP 请求报错：" + err.Error())
 		return
 	}
 	fmt.Println("状态信息：", resp)
 
 	if resp.Status != "200 OK" {
 		//开始发送心跳包
-		fmt.Println("集群注册失败。。。")
+		utils.Logg.Error("集群注册失败。。。")
 		return
 	}
-	fmt.Println("开始发送心跳包")
+	utils.Logg.Info("开始发送心跳包")
 	sendKeepalive(sconf["server_addr"]+":"+sconf["port"], cluster.ClusterName)
 	go func() {
 		cronSend(sconf["server_addr"]+":"+sconf["port"], cluster.ClusterName)
@@ -98,7 +99,7 @@ func cronSend(ip string, name string) {
 		sendKeepalive(ip, name)
 	})
 	if err != nil {
-		fmt.Println(err)
+		utils.Logg.Error(err.Error())
 	}
 	//启动/关闭
 	c.Start()
@@ -115,7 +116,7 @@ func sendKeepalive(ipp string, name string) {
 	// 创建 HTTP 请求
 	req, err := http.NewRequest(http.MethodPost, "http://"+ipp+"/api/keepalive?clusterName="+name, nil)
 	if err != nil {
-		fmt.Println("创建 HTTP 请求报错：", err.Error())
+		utils.Logg.Error("创建 HTTP 请求报错：" + err.Error())
 		return
 	}
 	// 发送 HTTP 请求
@@ -123,15 +124,15 @@ func sendKeepalive(ipp string, name string) {
 
 	resp, err = client.Do(req)
 	if err != nil {
-		fmt.Println("发送 HTTP 请求报错：", err.Error())
+		utils.Logg.Error("发送 HTTP 请求报错：" + err.Error())
 		return
 	}
 
 	//fmt.Println("状态信息：", resp.Status)
 	if resp.StatusCode == 200 {
-		fmt.Println("保持心跳。。。")
+		utils.Logg.Info("保持心跳。。。")
 	} else {
-		fmt.Println("心跳断开。。。")
+		utils.Logg.Error("心跳断开。。。")
 	}
 	defer resp.Body.Close()
 }

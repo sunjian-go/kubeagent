@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"main/utils"
 	"strconv"
 )
 
@@ -46,7 +46,7 @@ func (n *node) fromCells(cells []DataCell) []corev1.Node {
 func (n *node) GetNodes(filterName, limit, page string) (noderesp *NodeResp, err error) {
 	nodeList, err := K8s.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Error("获取node列表失败: " + err.Error())
+		utils.Logg.Error("获取node列表失败: " + err.Error())
 		return nil, errors.New("获取node列表失败: " + err.Error())
 	}
 
@@ -83,7 +83,7 @@ func (n *node) GetNodes(filterName, limit, page string) (noderesp *NodeResp, err
 func (n *node) GetNodeDetail(nodeName string) (node *corev1.Node, err error) {
 	node, err = K8s.Clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
 	if err != nil {
-		logger.Error("获取node详情失败: " + err.Error())
+		utils.Logg.Error("获取node详情失败: " + err.Error())
 		return nil, errors.New("获取node详情失败: " + err.Error())
 	}
 	return node, nil

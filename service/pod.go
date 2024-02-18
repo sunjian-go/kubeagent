@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	"io"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"main/config"
+	"main/utils"
 	"time"
 )
 
@@ -72,7 +72,7 @@ func (p *pod) GetPods(filterName, namespace string, limit, page int) (podsresp *
 	if err != nil {
 		//logger用于打印日志
 		//return用于返回response内容
-		logger.Info("获取pod列表失败" + err.Error())
+		utils.Logg.Error("获取pod列表失败" + err.Error())
 		return nil, errors.New("获取pod列表失败" + err.Error())
 	}
 	//实例化dataSelector对象
@@ -114,7 +114,7 @@ func (p *pod) GetPods(filterName, namespace string, limit, page int) (podsresp *
 func (p *pod) GetPodDetail(podName, namespace string) (pod *corev1.Pod, err error) {
 	pod, err = K8s.Clientset.CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取pod详情失败: ", err.Error())
+		utils.Logg.Error("获取pod详情失败: " + err.Error())
 		return nil, errors.New("获取pod详情失败: " + err.Error())
 	}
 	return pod, nil
@@ -125,7 +125,7 @@ func (p *pod) GetContainer(podName, namespace string) (containers []string, err 
 	//获取pod详情
 	pod, err := p.GetPodDetail(podName, namespace)
 	if err != nil {
-		logger.Info("获取pod详情失败: ", err.Error())
+		utils.Logg.Error("获取pod详情失败: " + err.Error())
 		return nil, errors.New("获取pod详情失败: " + err.Error())
 	}
 	//从pod中拿到容器名
@@ -137,12 +137,12 @@ func (p *pod) GetContainer(podName, namespace string) (containers []string, err 
 
 // 获取pod内容器日志
 func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context) (err error) {
-	fmt.Println("开始获取日志")
+	utils.Logg.Info("开始获取日志")
 	//new一个TerminalSession类型的pty实例,用来向前端发送数据
 	pty, err := NewTerminalSession(c.Writer, c.Request, nil)
 	if err != nil {
-		logger.Error("get pty failed: %v\n", err)
-		return errors.New("get pty failed: %v\n" + err.Error())
+		utils.Logg.Error("get pty failed: " + err.Error())
+		return errors.New("get pty failed: " + err.Error())
 	}
 	//设置超时时间
 	pty.wsConn.SetWriteDeadline(time.Now().Add(10 * time.Minute))
@@ -160,14 +160,14 @@ func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context
 	//3.发起stream连接，得到Response.body
 	podLog, err := req.Stream(context.TODO())
 	if err != nil {
-		logger.Error(errors.New("获取podLog失败" + err.Error()))
+		utils.Logg.Error("获取podLog失败" + err.Error())
 		return errors.New("获取podLog失败" + err.Error())
 	}
 
 	defer func() {
-		defer podLog.Close() //关闭stream连接
-		pty.Close()          //关闭pty连接
-		fmt.Println("pty连接已关闭")
+		podLog.Close() //关闭stream连接
+		pty.Close()    //关闭pty连接
+		utils.Logg.Info("pty连接已关闭")
 	}()
 	//4.将response.body写入到缓冲区，目的是为了转换成string类型
 	buf := make([]byte, 4096)
@@ -178,7 +178,7 @@ func (p *pod) GetPodLog(containerName, podName, namespace string, c *gin.Context
 			_, err := pty.Write(buf[:size]) //写入前端
 			//当报错的时候就是前端关闭了socket连接
 			if err != nil {
-				fmt.Println("pty写入报错" + err.Error())
+				utils.Logg.Error("pty写入报错" + err.Error())
 				break
 			}
 			//fmt.Println("获取到日志，开始写入：", string(buf))

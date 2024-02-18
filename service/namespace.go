@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"main/utils"
 )
 
 var Namespace namespace
@@ -39,7 +39,7 @@ func (n *namespace) fromCells(cells []DataCell) []corev1.Namespace {
 func (n *namespace) GetNamespaces() (namespaces *namespaceResp, err error) {
 	namespaceList, err := K8s.Clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Error("获取namespace列表失败：" + err.Error())
+		utils.Logg.Error("获取namespace列表失败：" + err.Error())
 		return nil, errors.New("获取namespace列表失败：" + err.Error())
 	}
 	return &namespaceResp{

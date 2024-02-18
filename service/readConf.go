@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/Unknwon/goconfig"
-	"github.com/wonderivan/logger"
+	"main/utils"
 	"os"
 )
 
@@ -17,13 +17,13 @@ func (c *conf) ReadConfFunc(opt string) (map[string]string, error) {
 	confPath := currentPath + "/conf/conf.ini"
 	_, err := os.Stat(confPath)
 	if err != nil {
-		logger.Error("配置文件未找到")
+		utils.Logg.Error("配置文件未找到")
 		return nil, err
 	}
 	// 加载配置
 	config, err := goconfig.LoadConfigFile(confPath)
 	if err != nil {
-		logger.Error("读取配置文件出错:", err)
+		utils.Logg.Error("读取配置文件出错:" + err.Error())
 		return nil, err
 	}
 	// 获取 section

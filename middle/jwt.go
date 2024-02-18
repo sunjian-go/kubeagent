@@ -1,7 +1,6 @@
 package middle
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"main/utils"
 	"strings"
@@ -11,7 +10,7 @@ import (
 func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//对登录接口放行,如果获取的URL是登陆路由就直接放行
-		fmt.Println("获取的URL为：", c.Request.URL.String())
+		utils.Logg.Info("获取的URL为：" + c.Request.URL.String())
 		if c.Request.URL.String() == "/api/login" ||
 			strings.Contains(c.Request.URL.String(), "getlog") ||
 			strings.Contains(c.Request.URL.String(), "/api/upload") ||
@@ -22,9 +21,9 @@ func JWTAuth() gin.HandlerFunc {
 			//如果不是登录路由就需要进行token验证
 			//1.获取Header中的Authorization
 			token := c.Request.Header.Get("Authorization")
-			fmt.Println("获取到token为：", token)
+			utils.Logg.Info("获取到token为：" + token)
 			if token == "" {
-				fmt.Println("请求未携带token，无权限访问")
+				utils.Logg.Info("请求未携带token，无权限访问")
 				c.JSON(400, gin.H{
 					"msg":  "请求未携带token，无权限访问",
 					"data": nil,

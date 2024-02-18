@@ -8,6 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
+	"main/utils"
 )
 
 var Listpath listpath
@@ -33,7 +34,7 @@ func (l *listpath) ListContainerPath(podinfo *PodInfo) (string, error) {
 
 	exec, err := remotecommand.NewSPDYExecutor(K8s.Conf, "POST", req.URL())
 	if err != nil {
-		fmt.Println("创建执行器失败：" + err.Error())
+		utils.Logg.Error("创建执行器失败：" + err.Error())
 		return "", errors.New("创建执行器失败：" + err.Error())
 	}
 
@@ -44,11 +45,11 @@ func (l *listpath) ListContainerPath(podinfo *PodInfo) (string, error) {
 	})
 
 	if err != nil {
-		fmt.Println("执行命令失败：" + err.Error())
+		utils.Logg.Error("执行命令失败：" + err.Error())
 		return "", errors.New("执行命令失败：" + err.Error())
 	} else {
-		fmt.Println("列出路径为: \n", stdout.String())
-		fmt.Println("stderr:", stderr.String())
+		utils.Logg.Info("列出路径为: \n" + stdout.String())
+		utils.Logg.Info("stderr:" + stderr.String())
 
 		return stdout.String(), nil
 	}

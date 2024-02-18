@@ -1,11 +1,12 @@
 package service
 
 import (
-	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	Networkingv1 "k8s.io/api/networking/v1"
+	"main/utils"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -74,7 +75,7 @@ func (d *DataSelector) Filter() *DataSelector {
 	//若Name的传参为空，则返回所有元素
 	if d.DataSelectQuery.FilterQuery.Name == "" {
 		return d
-		fmt.Println("Name为空！！！")
+		utils.Logg.Error("Name为空！！！")
 	}
 	//若Name的传参不为空，则返回元素名中包含Name的所有元素
 	filterdList := []DataCell{}
@@ -125,7 +126,7 @@ func (d *DataSelector) Paginate() *DataSelector {
 
 	//fmt.Println("起始：", startindex, " 结尾：", endIndex)
 	d.GenericDataList = d.GenericDataList[startindex:endIndex] //从下标为0的到下标为最后一个的元素赋值给元素切片
-	fmt.Println("成功分页后个数为：", len(d.GenericDataList))
+	utils.Logg.Info("成功分页后个数为：" + strconv.Itoa(len(d.GenericDataList)))
 	return d
 }
 

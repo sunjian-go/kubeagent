@@ -6,6 +6,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"main/config"
+	"main/utils"
 )
 
 var K8s k8s
@@ -19,7 +20,7 @@ func (k *k8s) K8sInit() error {
 	// 配置 Kubernetes 客户端
 	gconf, err := Conf.ReadConfFunc("server")
 	if err != nil {
-		fmt.Println(err.Error())
+		utils.Logg.Error(err.Error())
 		return err
 	}
 	//根据模式选择k8s的初始化方式
