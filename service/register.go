@@ -95,7 +95,7 @@ var c *cron.Cron
 func cronSend(ip string, name string) {
 
 	c = cron.New()
-	err := c.AddFunc("*/120 * * * * *", func() {
+	err := c.AddFunc("*/60 * * * * *", func() {
 		sendKeepalive(ip, name)
 	})
 	if err != nil {

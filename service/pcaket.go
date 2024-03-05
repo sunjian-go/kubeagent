@@ -20,6 +20,7 @@ type PackInfo struct {
 	Ip      string `json:"ip"`
 	Port    string `json:"port"`
 	NetName string `json:"netName"`
+	TimeOut string `json:"timeOut"`
 }
 
 // 开始抓包
